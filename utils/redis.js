@@ -14,7 +14,6 @@ class RedisClient {
       this.connectionStatus = false;
     });
     this.client.on('connect', () => {
-      console.log('Redis client connected successfully');
       this.connectionStatus = true;
     });
   }
@@ -37,7 +36,7 @@ class RedisClient {
     /**
      * that takes a string key, a value and a duration in second as arguments to store it in Redis
      */
-    await promisify(this.client.SETEX).bind(this.client)(key, value, duration);
+    await promisify(this.client.SETEX).bind(this.client)(key, duration, value);
   }
 
   async del(key) {
