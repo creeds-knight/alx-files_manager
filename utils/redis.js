@@ -5,7 +5,7 @@ class RedisClient {
   /**
      * This class creates a new instance of the RedisClient
      */
-  constructor () {
+  constructor() {
     // Initialising the redis client connection
     this.client = createClient();
     this.connectionStatus = true;
@@ -19,28 +19,28 @@ class RedisClient {
     });
   }
 
-  isAlive () {
+  isAlive() {
     /**
      * This returns the current status of the redis connection
      */
     return this.connectionStatus;
   }
 
-  async get (key) {
+  async get(key) {
     /**
      *  takes a string key as argument and returns the Redis value stored for this key
      */
-    return promisify(this.client.GET).bind(this.client.key);
+    return promisify(this.client.GET).bind(this.client)(key);
   }
 
-  async set (key, value, duration) {
+  async set(key, value, duration) {
     /**
      * that takes a string key, a value and a duration in second as arguments to store it in Redis
      */
     await promisify(this.client.SETEX).bind(this.client)(key, value, duration);
   }
 
-  async del (key) {
+  async del(key) {
     /**
      * Remove the value of a given key
      */
