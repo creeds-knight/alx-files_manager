@@ -20,7 +20,7 @@ const writeFile = promisify(fs.writeFile);
 export default class FilesController {
   static async postUpload(req, res) {
     try {
-      const userId = await getCurrentUser();
+      const userId = await getCurrentUser(req);
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
