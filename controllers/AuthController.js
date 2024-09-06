@@ -11,7 +11,7 @@ export default class AuthController {
     // console.log(token);
     const base64string = token.split(' ')[1];
     const decoded = Buffer.from(base64string, 'base64').toString('utf8');
-    if (!decoded) {
+    if (base64string.length !== 64 || !decoded) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     // console.log(decoded);
