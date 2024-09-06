@@ -16,6 +16,9 @@ export default class AuthController {
     }
     // console.log(decoded);
     const [email, password] = decoded.split(':', 2);
+    if (!email || !password) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const users = dbClient.client.db().collection('users');
 
