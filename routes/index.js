@@ -1,6 +1,7 @@
 import AppController from '../controllers/AppController';
 import UsersController from '../controllers/UsersController';
 import AuthController from '../controllers/AuthController';
+import FilesController from '../controllers/FilesController';
 
 const routing = (app) => {
   app.get('/status', AppController.getStatus);
@@ -9,6 +10,7 @@ const routing = (app) => {
   app.get('/connect', AuthController.getConnect);
   app.get('/disconnect', AuthController.getDisconnect);
   app.get('/users/me', UsersController.getMe);
+  app.post('/files', FilesController.postUpload);
 };
 
 export default routing;
