@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import fs from 'fs';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
-import { getCurrentUser } from './AuthController';
+import getCurrentUser from '../utils/getUserToken';
 import dbClient from '../utils/db';
 
 const rootFolderId = 0; // Ensure rootFolderId is a string to match with parentId
@@ -20,8 +20,8 @@ const writeFile = promisify(fs.writeFile);
 export default class FilesController {
   static async postUpload(req, res) {
     try {
-      const user = await getCurrentUser();
-      if (!user) {
+      const userId = await getCurrentUser();
+      if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -50,13 +50,13 @@ export default class FilesController {
         }
       }
 
-      const userId = new ObjectId(user._id.toString());
+      // const userId = new ObjectId(user._id.toString());
       const newFile = {
         userId,
         name,
         type,
         isPublic,
-        parentId: parentId === rootFolderId ? rootFolderId : new ObjectId(parentId),
+        parentId: parentId === rootFolderId ? rootFolderId : parentId,
       };
 
       if (type === acceptedFileTypes.folder) {
@@ -65,11 +65,7 @@ export default class FilesController {
         newFile.id = fileId;
         return res.status(201).json({
           id: fileId,
-          userId,
-          name,
-          type,
-          isPublic,
-          parentId: parentId === rootFolderId ? rootFolderId : parentId,
+          ...newFile,
         });
       }
 
@@ -78,21 +74,17 @@ export default class FilesController {
       const localPath = join(baseDir, uuidv4());
       await writeFile(localPath, Buffer.from(data, 'base64'));
 
-      newFile.localPath = localPath;
+      newFile[localPath] = localPath;
       const inserteddoc = await dbClient.client.db().collection('files').insertOne(newFile);
       const fileid = inserteddoc.insertedId.toString();
       newFile.id = fileid;
       return res.status(201).json({
         id: fileid,
-        userId,
-        name,
-        type,
-        isPublic,
-        parentId: parentId === rootFolderId ? rootFolderId : parentId,
+        ...newFile,
       });
     } catch (error) {
       console.error('Error in postUpload:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: error.message });
     }
   }
 }

@@ -4,7 +4,6 @@ import sha1 from 'sha1';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
-let currentUser = null;
 
 export default class AuthController {
   static async getConnect(req, res) {
@@ -53,7 +52,6 @@ export default class AuthController {
       const key = `auth_${uuidString}`;
       await redisClient.set(key, user._id.toString(), 86400); // 24 hrs => 86400 secs
 
-      currentUser = user; // Getting the current user
 
       res.status(200);
       return res.json({ token: uuidString });
@@ -79,11 +77,3 @@ export default class AuthController {
     }
   }
 }
-
-export const getCurrentUser = async () => new Promise((resolve, reject) => {
-  if (currentUser) {
-    resolve(currentUser);
-  } else {
-    reject(new Error('Unauthorized'));
-  }
-});
