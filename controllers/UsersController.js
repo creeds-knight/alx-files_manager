@@ -1,10 +1,9 @@
 import sha1 from 'sha1';
+import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
 import redisclient from '../utils/redis';
-import { ObjectId } from 'mongodb';
 
 export default class UsersController {
-
   static async getMe(req, res) {
     // console.log(req.headers);
     const xToken = req.headers['x-token'];
@@ -21,7 +20,7 @@ export default class UsersController {
       const { _id, email } = user;
       const returnObj = {
         id: _id,
-        email
+        email,
       };
       return res.status(200).json(returnObj);
     } catch (err) {
@@ -53,7 +52,7 @@ export default class UsersController {
       return res.status(201).json({ id: newUser.insertedId, email });
     } catch (err) {
       console.log(err);
-      return res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: 'Internal server error' });
     }
   }
 }
