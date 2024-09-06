@@ -9,11 +9,26 @@ export default class AuthController {
     const token = req.headers.authorization || null;
 
     // console.log(token);
-    const base64string = token.split(' ')[1];
-    const decoded = Buffer.from(base64string, 'base64').toString('utf8');
-    if (base64string.length !== 64 || !decoded) {
+    if (!token || !token.startsWith('Basic ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    const base64string = token.split(' ')[1];
+    const isBase64 = /^[A-Za-z0-9+/=]+$/.test(base64string);
+
+    if (!isBase64) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    let decoded;
+
+    try {
+      decoded = Buffer.from(base64string, 'base64').toString('utf8');
+    } catch (err) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    /** if (base64string.length !== 64 || !decoded) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    } */
     // console.log(decoded);
     const [email, password] = decoded.split(':', 2);
     if (!email || !password) {
