@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getCurrentUser } from './AuthController';
 import dbClient from '../utils/db';
 
-const rootFolderId = '0'; // Ensure rootFolderId is a string to match with parentId
+const rootFolderId = 0; // Ensure rootFolderId is a string to match with parentId
 const acceptedFileTypes = {
   folder: 'folder',
   file: 'file',
@@ -60,8 +60,17 @@ export default class FilesController {
       };
 
       if (type === acceptedFileTypes.folder) {
-        await dbClient.client.db().collection('files').insertOne(newFile);
-        return res.status(201).json(newFile);
+        const insertedDoc = await dbClient.client.db().collection('files').insertOne(newFile);
+        const fileId = insertedDoc.insertedId.toString();
+        newFile.id = fileId;
+        return res.status(201).json({
+          id: fileId,
+          userId,
+          name,
+          type,
+          isPublic,
+          parentId: parentId === rootFolderId ? rootFolderId : parentId,
+        });
       }
 
       const baseDir = `${process.env.FOLDER_PATH || ''}`.trim().length > 0 ? process.env.FOLDER_PATH.trim() : join(tmpdir(), 'files_manager');
@@ -70,8 +79,17 @@ export default class FilesController {
       await writeFile(localPath, Buffer.from(data, 'base64'));
 
       newFile.localPath = localPath;
-      await dbClient.client.db().collection('files').insertOne(newFile);
-      return res.status(201).json(newFile);
+      const inserteddoc = await dbClient.client.db().collection('files').insertOne(newFile);
+      const fileid = inserteddoc.insertedId.toString();
+      newFile.id = fileid;
+      return res.status(201).json({
+        id: fileid,
+        userId,
+        name,
+        type,
+        isPublic,
+        parentId: parentId === rootFolderId ? rootFolderId : parentId,
+      });
     } catch (error) {
       console.error('Error in postUpload:', error);
       return res.status(500).json({ error: 'Internal server error' });
