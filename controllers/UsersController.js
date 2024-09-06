@@ -1,29 +1,59 @@
 import sha1 from 'sha1';
 import dbClient from '../utils/db';
+import redisclient from '../utils/redis';
+import { ObjectId } from 'mongodb';
 
 export default class UsersController {
+
+  static async getMe(req, res) {
+    // console.log(req.headers);
+    const xToken = req.headers['x-token'];
+    const key = `auth_${xToken}`;
+    // console.log(`auth_token: ${key}`);
+    try {
+      const userId = await redisclient.get(key);
+      // console.log(userId);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const query = { _id: new ObjectId(userId) };
+      const user = await dbClient.client.db().collection('users').findOne(query);
+      const { _id, email } = user;
+      const returnObj = {
+        id: _id,
+        email
+      };
+      return res.status(200).json(returnObj);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   static async postNew(req, res) {
-    console.log(req.body);
+    // console.log(req.body);
     const email = req.body.email || null;
     const password = req.body.password || null;
     if (email === null) {
-      res.status(400).send({ error: 'Missing email' });
+      return res.status(400).json({ error: 'Missing email' });
     }
     if (password === null) {
-      res.status(400).send({ error: 'Missing password' });
+      return res.status(400).json({ error: 'Missing password' });
     }
-    const user = await dbClient.db.collection('users').find({ email });
-    if (user) {
-      res.status(400).send({ error: 'Already exist' });
+    const users = dbClient.client.db().collection('users');
+    try {
+      const user = await users.findOne({ email });
+      if (user) {
+        return res.status(400).json({ error: 'Already exist' });
+      }
+      const sha1Password = sha1(password);
+      const newUser = await users.insertOne({
+        email,
+        password: sha1Password,
+      });
+      return res.status(201).json({ id: newUser.insertedId, email });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ error: "Internal server error" });
     }
-    const sha1Password = sha1(password);
-    const newUser = await dbClient.usersCollection.insertOne({
-      email,
-      password: sha1Password,
-    });
-    res.status(201).send({
-      id: newUser.insertedId,
-      email,
-    });
   }
 }
