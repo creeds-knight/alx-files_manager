@@ -8,8 +8,13 @@ export default class AuthController {
   static async getConnect(req, res) {
     const token = req.headers.authorization || null;
 
+    // console.log(token);
     const base64string = token.split(' ')[1];
     const decoded = Buffer.from(base64string, 'base64').toString('utf8');
+    if (!decoded) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // console.log(decoded);
     const [email, password] = decoded.split(':', 2);
 
     const users = dbClient.client.db().collection('users');
