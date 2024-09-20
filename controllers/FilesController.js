@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import fs from 'fs';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
+
 import getCurrentUser from '../utils/getUserToken';
 import dbClient from '../utils/db';
 
@@ -85,6 +86,28 @@ export default class FilesController {
     } catch (error) {
       console.error('Error in postUpload:', error);
       return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async getShow(req, res) {
+    try {
+      const userId = await getCurrentUser(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'Unauthorized' });
+      }
+      const query = { _id: new ObjectId(id), userId };
+      const file = await dbClient.client.db().collection('files').findOne(query);
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      return res.status(200).json(file);
+    } catch (err) {
+      console.error('Error fetching file:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 }
