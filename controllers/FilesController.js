@@ -110,4 +110,29 @@ export default class FilesController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+  static async getIndex(req, res) {
+    try {
+      const userId = await getCurrentUser(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const { parentId = '0', page = 0 } = req.query;
+      const pageNumber = parseInt(page, 10);
+      const pageSize = 20;
+      const query = {
+        userId,
+        parentId: parentId === '0' ? 0 : parentId,
+      };
+      const files = await dbClient.client.db().collection('files').aggregate([
+        { $match: query },
+        { $skip: pageNumber * pageSize },
+        { $limit: pageSize },
+      ]).toArray();
+      return res.status(200).json(files);
+    } catch (err) {
+      console.error('Error retrieving files:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
 }
