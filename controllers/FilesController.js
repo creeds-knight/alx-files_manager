@@ -34,7 +34,7 @@ export default class FilesController {
         return res.status(400).json({ error: 'Missing name' });
       }
       if (!type || !Object.values(acceptedFileTypes).includes(type)) {
-        return res.status(400).json({ error: 'Invalid type' });
+        return res.status(400).json({ error: 'Missing type' });
       }
       if (type !== acceptedFileTypes.folder && !data) {
         return res.status(400).json({ error: 'Missing data' });
