@@ -9,7 +9,7 @@ const port = process.env.PORT || '5000';
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({
   limit: '50mb',
-  extended: true
+  extended: true,
 }));
 routing(app);
 
