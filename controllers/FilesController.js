@@ -132,7 +132,7 @@ export default class FilesController {
       };
       // if parentId is 0, return all files
       if (parentId !== '0') {
-        query['parentId'] = parentId;
+        query['parentId'] = new ObjectId(parentId);
       }
       const files = await dbClient.client.db().collection('files').aggregate([
         { $match: query },
