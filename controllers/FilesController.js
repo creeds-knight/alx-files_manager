@@ -99,7 +99,7 @@ export default class FilesController {
       if (!ObjectId.isValid(id)) {
         return res.status(400).json({ error: 'Unauthorized' });
       }
-      const query = { _id: new ObjectId(id), userId };
+      const query = { _id: new ObjectId(id), userId: new ObjectId(userId) };
       const file = await dbClient.client.db().collection('files').findOne(query);
       if (!file) {
         return res.status(404).json({ error: 'Not found' });
