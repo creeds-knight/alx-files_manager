@@ -121,7 +121,7 @@ export default class FilesController {
       const pageNumber = parseInt(page, 10);
       const pageSize = 20;
       const query = {
-        userId,
+        userId: new ObjectId(userId),
         parentId: parentId === '0' ? 0 : parentId,
       };
       const files = await dbClient.client.db().collection('files').aggregate([
