@@ -64,6 +64,9 @@ export default class FilesController {
         const insertedDoc = await dbClient.client.db().collection('files').insertOne(newFile);
         const fileId = insertedDoc.insertedId.toString();
         newFile.id = fileId;
+        if (newFile.hasOwnProperty('_id')) {
+          delete newFile._id;
+        }
         return res.status(201).json({
           id: fileId,
           ...newFile,
@@ -75,10 +78,14 @@ export default class FilesController {
       const localPath = join(baseDir, uuidv4());
       await writeFile(localPath, Buffer.from(data, 'base64'));
 
-      newFile[localPath] = localPath;
+      newFile['localPath'] = localPath;
       const inserteddoc = await dbClient.client.db().collection('files').insertOne(newFile);
       const fileid = inserteddoc.insertedId.toString();
       newFile.id = fileid;
+      if (newFile.hasOwnProperty('_id')) {
+        delete newFile._id;
+      }
+      delete newFile.localPath
       return res.status(201).json({
         id: fileid,
         ...newFile,
