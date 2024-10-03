@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import fs from 'fs';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
-
+import mime from 'mime-types';
 import getCurrentUser from '../utils/getUserToken';
 import dbClient from '../utils/db';
 
@@ -19,6 +19,34 @@ const mkdir = promisify(fs.mkdir);
 const writeFile = promisify(fs.writeFile);
 
 export default class FilesController {
+  static async getFile(req, res) {
+    try {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const file = await dbClient.client.db().collection('files').findOne(query);
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const userId = await getCurrentUser(req);
+      if ((file.isPublic === false && !userId) || (userId !== file.userId.toString())) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      if (file.type === 'folder') {
+        return res.status(400).json({ error: "A folder doesn't have content" });
+      }
+      const { localPath } = file;
+      if (!fs.existsSync(localPath)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const mimeType = mime.lookup(file.name);
+      res.setHeader('Content-Type', mimeType || 'application/octet-stream');
+      const fileContent = fs.readFileSync(localPath);
+      return res.status(200).send(fileContent);
+    } catch (err) {
+      return res.status(500).json({ error: err.msg || err.toString() });
+    }
+  }
+
   static async putUnpublish(req, res) {
     try {
       const userId = await getCurrentUser(req);
@@ -181,6 +209,13 @@ export default class FilesController {
       const file = await dbClient.client.db().collection('files').findOne(query);
       if (!file) {
         return res.status(404).json({ error: 'Not found' });
+      }
+      if (file._id) {
+        file.id = file._id;
+        delete file._id;
+      }
+      if (file.localPath) {
+        delete file.localPath;
       }
       return res.status(200).json(file);
     } catch (err) {
