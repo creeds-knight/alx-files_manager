@@ -53,7 +53,7 @@ export default class FilesController {
 
       // const userId = new ObjectId(user._id.toString());
       const newFile = {
-        userId,
+        userId: new ObjectId(userId),
         name,
         type,
         isPublic,
@@ -128,15 +128,23 @@ export default class FilesController {
       const pageNumber = parseInt(page, 10);
       const pageSize = 20;
       const query = {
-        userId: new ObjectId(userId),
-        parentId: parentId === '0' ? 0 : parentId,
+        userId: new ObjectId(userId)
       };
+      // if parentId is 0, return all files
+      if (parentId !== '0') {
+        query['parentId'] = parentId;
+      }
       const files = await dbClient.client.db().collection('files').aggregate([
         { $match: query },
         { $skip: pageNumber * pageSize },
         { $limit: pageSize },
       ]).toArray();
-      return res.status(200).json(files);
+      // clean the array
+      const cleanFiles = files.map(file => {
+        const { _id, localPath, ...rest } = file;
+        return { id: _id, ...rest };
+      });
+      return res.status(200).json(cleanFiles);
     } catch (err) {
       console.error('Error retrieving files:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
