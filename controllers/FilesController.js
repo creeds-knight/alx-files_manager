@@ -28,7 +28,10 @@ export default class FilesController {
         return res.status(404).json({ error: 'Not found' });
       }
       const userId = await getCurrentUser(req);
-      if ((file.isPublic === false && !userId) || (userId !== file.userId.toString())) {
+      if (!file.isPublic && !userId) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      if (!file.isPublic && userId !== file.userId.toString()) {
         return res.status(404).json({ error: 'Not found' });
       }
       if (file.type === 'folder') {
