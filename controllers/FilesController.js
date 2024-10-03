@@ -19,13 +19,84 @@ const mkdir = promisify(fs.mkdir);
 const writeFile = promisify(fs.writeFile);
 
 export default class FilesController {
+  static async putUnpublish(req, res) {
+    try {
+      const userId = await getCurrentUser(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const query = { _id: new ObjectId(id), userId: new ObjectId(userId) };
+      const file = await dbClient.client.db().collection('files').findOne(query);
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      // update file
+      const update = {
+        $set: {
+          isPublic: false,
+        },
+      };
+      await dbClient.client.db().collection('files').updateOne(query, update);
+      file.isPublic = false;
+      if (file._id) {
+        file.id = file._id;
+        delete file._id;
+      }
+      if (file.localPath) {
+        delete file.localPath;
+      }
+      return res.status(200).json(file);
+    } catch (err) {
+      return res.status(500).json({ error: err.msg || err.toString() });
+    }
+  }
+
+  static async putPublish(req, res) {
+    try {
+      const userId = await getCurrentUser(req);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const query = { _id: new ObjectId(id), userId: new ObjectId(userId) };
+      const file = await dbClient.client.db().collection('files').findOne(query);
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      // update file
+      const update = {
+        $set: {
+          isPublic: true,
+        },
+      };
+      await dbClient.client.db().collection('files').updateOne(query, update);
+      file.isPublic = true;
+      if (file._id) {
+        file.id = file._id;
+        delete file._id;
+      }
+      if (file.localPath) {
+        delete file.localPath;
+      }
+      return res.status(200).json(file);
+    } catch (err) {
+      return res.status(500).json({ error: err.msg || err.toString() });
+    }
+  }
+
   static async postUpload(req, res) {
     try {
       const userId = await getCurrentUser(req);
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
       const {
         name, type, parentId = rootFolderId, isPublic = false, data = '',
       } = req.body || {};
