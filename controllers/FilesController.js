@@ -64,7 +64,7 @@ export default class FilesController {
         const insertedDoc = await dbClient.client.db().collection('files').insertOne(newFile);
         const fileId = insertedDoc.insertedId.toString();
         newFile.id = fileId;
-        if (newFile.hasOwnProperty('_id')) {
+        if (Object.prototype.hasOwnProperty.call(newFile, '_id')) {
           delete newFile._id;
         }
         return res.status(201).json({
@@ -78,14 +78,14 @@ export default class FilesController {
       const localPath = join(baseDir, uuidv4());
       await writeFile(localPath, Buffer.from(data, 'base64'));
 
-      newFile['localPath'] = localPath;
+      newFile.localPath = localPath;
       const inserteddoc = await dbClient.client.db().collection('files').insertOne(newFile);
       const fileid = inserteddoc.insertedId.toString();
       newFile.id = fileid;
-      if (newFile.hasOwnProperty('_id')) {
+      if (Object.prototype.hasOwnProperty.call(newFile, '_id')) {
         delete newFile._id;
       }
-      delete newFile.localPath
+      delete newFile.localPath;
       return res.status(201).json({
         id: fileid,
         ...newFile,
@@ -128,11 +128,11 @@ export default class FilesController {
       const pageNumber = parseInt(page, 10);
       const pageSize = 20;
       const query = {
-        userId: new ObjectId(userId)
+        userId: new ObjectId(userId),
       };
       // if parentId is 0, return all files
       if (parentId !== '0') {
-        query['parentId'] = new ObjectId(parentId);
+        query.parentId = new ObjectId(parentId);
       }
       const files = await dbClient.client.db().collection('files').aggregate([
         { $match: query },
@@ -140,7 +140,7 @@ export default class FilesController {
         { $limit: pageSize },
       ]).toArray();
       // clean the array
-      const cleanFiles = files.map(file => {
+      const cleanFiles = files.map((file) => {
         const { _id, localPath, ...rest } = file;
         return { id: _id, ...rest };
       });
